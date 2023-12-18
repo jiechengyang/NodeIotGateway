@@ -1,5 +1,5 @@
 // 插管式土壤墒情
-const BaseData = require('./BaseData')
+const BaseData = require('../BaseData')
 module.exports = class SoliData extends BaseData {
   constructor(raw) {
     super(raw)

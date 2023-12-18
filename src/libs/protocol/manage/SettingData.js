@@ -1,5 +1,5 @@
 // 系统配置
-const BaseData = require('./BaseData')
+const BaseData = require('../BaseData')
 module.exports = class SettingData extends BaseData {
     constructor(raw) {
         super(raw)

@@ -2,7 +2,7 @@ const UtilsHelper = require('../../helpers/UtilsHelper')
 const xphHelper = require('../xph')
 const BaseCollectionClient = require('./BaseCollectionClient')
 const CRC16 = require('../CRC16')
-module.exports = class ModbusCollectionClient extends BaseCollectionClient {
+module.exports = class XphModbusCollectionClient extends BaseCollectionClient {
     constructor(socket, collectSockets) {
         super()
         socket.isFirsTransfer = true

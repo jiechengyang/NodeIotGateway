@@ -1,8 +1,8 @@
 // 作物站
-const BaseData = require('./BaseData')
-const DbHelper = require('../../helpers/DbHelper')
+const BaseData = require('../BaseData')
+const DbHelper = require('../../../helpers/DbHelper')
 const dateFormat = require('dateformat')
-const UtilsHelper = require('../../helpers/UtilsHelper')
+const UtilsHelper = require('../../../helpers/UtilsHelper')
 const request = require('request')
 const systemConfig = UtilsHelper.loadConfig()
 module.exports = class CropsGrowData extends BaseData {

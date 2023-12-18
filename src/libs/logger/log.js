@@ -37,7 +37,10 @@ log4js.configure({
   },
   categories: {
     // appenders:取appenders项, level:设置级别
-    default: { appenders: ['stdout', 'error', 'info'], level: 'debug' },
+    // default: { appenders: ['stdout', 'error', 'info'], level: 'debug' },
+    // error: { appenders: ['stdout', 'error'], level: 'error' },
+    default: { appenders: ['stdout'], level: 'debug' },
+    info: { appenders: ['stdout', 'info'], level: 'info' },
     error: { appenders: ['stdout', 'error'], level: 'error' },
   },
 })

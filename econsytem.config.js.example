@@ -2,7 +2,7 @@ module.exports = {
   apps : [
     {
       name       : "{{project_name}}-iot-gateway-server",
-      script     : "./src/box_iot_server.js",
+      script     : "./src/gateway_server.js",
       env_production : {
         "NODE_ENV": "production"
       },

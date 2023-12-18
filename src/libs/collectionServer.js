@@ -2,20 +2,24 @@ const net = require('net'),
   DbProxy = require('./DbProxy'),
   StringHelper = require('../helpers/StringHelper'),
   BoxCollectionClient = require('./clients/BoxCollectionClient'),
-  BaseCollectionClient = require('./clients/BaseCollectionClient')
+  XphModbusCollectionClient = require('./clients/XphModbusCollectionClient'),
+  XphCollectionClient = require('./clients/XphCollectionClient'),
+  DefaultCollectionClient = require('./clients/DefaultCollectionClient')
   log4js = require('./logger/log'),
-  logger = log4js.getLogger('default'),
   EventEmitter = require('events').EventEmitter,
   heartBeat = require('./HeartBeat')
 
   // 客户端映射
   const MODE_HANDLERS = {
-    box: BoxCollectionClient, // 在 'box' 模式下使用 BoxCollectionClient 类处理
+    box: BoxCollectionClient, // 娃娃机盒子终端业务适配
+    xph_modbus: XphModbusCollectionClient, // 新普惠modbus协议终端业务适配
+    xph: XphCollectionClient // 新普惠自家协议业务适配
     // 可以添加其他模式和对应的处理程序类
   }
 module.exports = class CollectionServer {
   constructor(config) {
     this.config = config
+    this.clientClass = null
     this.client = null
     this.event = new EventEmitter()
     this.collectSocketCount = 0
@@ -31,7 +35,6 @@ module.exports = class CollectionServer {
   init() {
     // this.initDb()
     this.initServer()
-
     // 客户端断开连接
     this.event.on('close:client', (socket) => {
       this.collectSocketCount -= 1
@@ -51,13 +54,13 @@ module.exports = class CollectionServer {
 
     process.on('unhandledRejection', (reason, promise) => {
       console.log('未处理的拒绝：', promise, '原因：', reason)
-      logger.error('[服务端] 未处理的拒绝')
+      log4js.getLogger('error').error('[服务端] 未处理的拒绝')
       // 记录日志、抛出错误、或其他逻辑。
     })
 
     const signals = ['SIGINT', 'SIGTERM', 'SIGQUIT']
     signals.forEach(signal => process.on(signal, () => {
-        logger.info('[服务端] 停止服务')
+      log4js.getLogger('info').info('[服务端] 停止服务')
         // https://www.jianshu.com/p/e73b4b077c68
         this.clear()
         setTimeout(() => {
@@ -72,6 +75,9 @@ module.exports = class CollectionServer {
   }
 
 
+  /**
+   * TODO: 下一个版本将会取消对db的依赖
+   */
   initDb() {
     //定义pool池
     this.dbPool = new DbProxy(this.config.mysql, true)
@@ -89,16 +95,26 @@ module.exports = class CollectionServer {
   initServer() {
     let that = this
     this.server = net.createServer((socket) => {
-      const CollectionClientClass = MODE_HANDLERS[this.mode] || BaseCollectionClient
-      const collectionClient = new CollectionClientClass(socket)
-      collectionClient.setApp(this)
-      this.client = collectionClient
+      this.newClientByMode(this.mode)
     })
     this.handler()
   }
 
-  run(mode = 'box') {
-    this.mode = mode.toLocaleLowerCase()
+  newClientByMode(mode = null) {
+    this.mode = mode || this.mode
+    this.clientClass = MODE_HANDLERS[this.mode] || DefaultCollectionClient
+    if (this.clientClass) {
+      const collectionClient = new this.clientClass(socket)
+      collectionClient.setApp(this)
+      this.client = collectionClient
+    }
+  }
+  /**
+   * 
+   * @param {*} mode  TODO: 指定运行的数据通信协议业务（默认一种产商设备对于一个端口，该模式将会在下一个版本下重构）;也可以在收到注册包的时候使用newClientByMode去调整；
+   */
+  run(mode = 'default') {
+    this.mode = mode
     this.init()
     this.server.listen(
       {
@@ -108,7 +124,7 @@ module.exports = class CollectionServer {
       () => {
         const address = this.server.address()
         /* 说明TCP服务器监听的地址是 IPv6 还是 IPv4 */
-        logger.info('[服务端] the family of server is ' + address.family)
+        log4js.getLogger('info').info('[服务端] the family of server is ' + address.family)
       }
     )
   }
@@ -124,7 +140,7 @@ module.exports = class CollectionServer {
   }
 
   onConnection(socket) {
-    logger.log(
+    log4js.getLogger('info').log(
       '[客户端] The Client From: ' + socket.remoteAddress + ':' + socket.remotePort
     )
     // const uniqid = UtilsHelper.saltHashStr(
@@ -135,28 +151,28 @@ module.exports = class CollectionServer {
     const uniqid = StringHelper.stringToHex(socket.remoteAddress + ':' + socket.remotePort + ':' + this.collectSocketCount)
     socket.uniqid = uniqid
     this.collectSockets[socket.uniqid] = socket
-    logger.info(`[服务端] 当前客户端连接数：${this.collectSocketCount}`)
+    log4js.getLogger('info').info(`[服务端] 当前客户端连接数：${this.collectSocketCount}`)
   }
 
   onListening() {
     const msg = '启动 采数 服务， tcp://' + this.config.host + ':' + this.config.port
-    logger.info('[服务端] ' + msg)
+    log4js.getLogger('info').info('[服务端] ' + msg)
     console.log('this.config.heartTime:', this.config.heartTime)
     heartBeat.detectionLater(this.collectSockets, this.config.heartTime)
   }
 
   onClose() {
     this.clear()
-    logger.info('[服务端] server closed!')
+    log4js.getLogger('info').info('[服务端] server closed!')
   }
 
   onError(err) {
     this.clear()
     let that = this
     const msg = `error#code${err.code}#info#${err.toString()}`
-    logger.error(`[服务端] ${msg}`)
+    log4js.getLogger('info').error(`[服务端] ${msg}`)
     if ('EADDRINUSE' === err.code) {
-      logger.error('[服务端] 地址正被使用，重试中...')
+      log4js.getLogger('info').error('[服务端] 地址正被使用，重试中...')
       setTimeout(() => {
         that.server.close()
         that.server.listen(this.config.host, this.config.port)

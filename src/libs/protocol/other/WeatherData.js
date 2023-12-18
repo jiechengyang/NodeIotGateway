@@ -1,5 +1,5 @@
 // 小型气象站
-const BaseData = require('./BaseData')
+const BaseData = require('../BaseData')
 module.exports = class WeatherData extends BaseData {
   constructor(raw) {
     super(raw)

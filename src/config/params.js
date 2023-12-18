@@ -1,6 +1,6 @@
 module.exports = {
   mysql: {
-    database: 'byt_xuyong_new_iot',
+    database: 'iot_data',
     user: 'root',
     password: 'root',
     host: 'localhost',

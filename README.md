@@ -22,6 +22,58 @@ node-iot-gateway
 - 错误处理不足：代码中的错误处理可能不够严谨，例如在一些地方出现了直接的 try-catch 语句，并没有详细处理错误情况。
 - 潜在的资源泄漏：部分地方未能完全释放资源，例如关闭连接时可能存在一些资源未被正确释放的情况。
 
+# 目录结构
+
+node-iot-gateway/
+│
+├── runtime/                 // 运行目录（存放日志、pid）
+│
+├── src/                     // 主程序目录（处理路由的业务逻辑）
+│   ├── biz/                 // 业务目录（db业务操作）
+│   │   ├── box.js           // 娃娃机业务程序
+│   │   └── ...              // 其他业务文件
+│   ├── config/              // 配置文件目录
+│   │   ├── config.js        // 主配置文件
+│   │   ├── params.js        // 默认配置文件
+│   │   ├── params-local.js  // 项目配置文件，不同项目使用此文件覆盖主要的参数配置
+│   │   └── ...              // 其他配置文件
+│   ├── example/             // 一些测试示例程序
+│   ├── helpers/             // 助手工具目录
+│   │   ├── DbHelper.js      // mysql 操作助手
+│   │   ├── StringHelper.js  // 字符串助手
+│   │   ├── UtilsHelper.js   // 聚合工具助手（后期将统一调整到字符串助手）
+│   │   └── ...              // 其他助手工具
+│   ├── libs/                // 网关核心程序目录
+│   │   ├── clients/         // 设备（通信协议）客户端逻辑目录
+│   │   │   ├── BaseCollectionClient.js    // 采集客户端基类
+│   │   │   ├── BoxCollectionClient.js    // 娃娃机客户端逻辑
+│   │   │   ├── XphModusCollectionClient.js    // 新普惠modbus传感器客户端逻辑
+│   │   │   ├── XphCollectionClient.js    // 新普惠自家协议传感器客户端逻辑
+│   │   │   ├── DefaultCollectionClient.js    // 默认测试
+│   │   │   └── OtherCollectionClient.js    // 不知名产商
+│   │   ├── logger/         // 日志操作目录
+│   │   │   ├── log.js      // log4j
+│   │   │   └── ...         // 其他日志文件
+│   │   ├── protocol/       // 通信协议目录
+│   │   │   ├── other/      // 不知名产商
+│   │   │   ├── manage/     // 管理端协议交互
+│   │   │   ├── BaseData.js // 协议基类
+│   │   │   ├── Box.js      // 娃娃机
+│   │   │   └── ...         // 其他协议文件
+│   │   ├── collectionServer.js    // 主程序类
+│   │   ├── CRC16.js        // CRC校验
+│   │   ├── DbProxy.js      // db代理
+│   │   ├── HeartBeat.js    // 心跳
+│   │   └── ...             // 其他核心文件
+│   ├── gateway_server.js    // 网关启动文件
+│   └── ...                  // 其他主程序文件
+│
+├── econsytem.config.js.example  // pm2配置文件
+├── package.json           // 项目依赖配置文件
+├── README.md              // 项目说明文件
+└── yarn.lock               // Yarn包管理文件
+  
+
 # 部署
 
 - 安装npm包
@@ -69,8 +121,10 @@ module.exports = {
     port: 16009,//网关端口号
 }
 ```
+- 测试运行
+  node src/gateway_server.js
 
-- 启动服务
+- 生产运行
 
 ```shell
 pm2 start econsytem.config.js
@@ -90,6 +144,10 @@ pm2 show
 ```shell
 pm2 log 
 ```
+
+- 日志分割
+
+`pm2 install pm2-logrotate` [参考](https://www.jianshu.com/p/3ef43dc80575)
 
 
 更多参考，[pm2官方](https://pm2.keymetrics.io/)

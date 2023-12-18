@@ -1,7 +1,7 @@
 const BaseCollectionClient = require('./BaseCollectionClient')
-const SoliData = require('../protocol/SoliData')
-const WeatherData = require('../protocol/WeatherData')
-const CropsGrowData = require('../protocol/CropsGrowData')
+const SoliData = require('../protocol/other/SoliData')
+const WeatherData = require('../protocol/other/WeatherData')
+const CropsGrowData = require('../protocol/other/CropsGrowData')
 const SettingData = require('../protocol/SettingData')
 const net = require("net")
 module.exports = class OtherCollectionClient extends BaseCollectionClient {
