@@ -56,6 +56,7 @@ cp econsytem.config.js.example econsytem.config.js
   主要的参数有下面的：
   ```js
 module.exports = {
+   // TODO： 下一个版本将不再对业务数据支持
     mysql: {
         database: '{{db_name}}',
         user: '{{db_user}}',
