@@ -1,0 +1,21 @@
+module.exports = {
+  apps : [
+    {
+      name       : "{{project_name}}-iot-gateway-server",
+      script     : "./src/box_iot_server.js",
+      env_production : {
+        "NODE_ENV": "production"
+      },
+      instances: 1,
+      autorestart: true,
+      watch       : true,
+      ignore_watch: ["[\/\\]\./", "logs", "pid", "node_modules"],
+      log_date_format: "YYYY-MM-DD HH:mm:ss",
+      error_file: './logs/iot-gateway-server-err.log',
+      out_file: './logs/iot-gateway-server-out.log',
+       pid_file: './pid/{{project_name}}-iot-gateway-server-pm_id.pid',
+      // instances  : 4,
+      //exec_mode  : "cluster"
+    }
+  ]
+}
