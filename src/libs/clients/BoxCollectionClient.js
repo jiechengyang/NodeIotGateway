@@ -2,7 +2,6 @@ const BaseCollectionClient = require('./BaseCollectionClient')
 const Box = require('../protocol/Box')
 const utilsHelper = require('../../helpers/UtilsHelper')
 const log4js = require('../logger/log')
-const logger = log4js.getLogger('default')
 const BizBox = require('../../biz/box')
 const net = require('net')
 
@@ -55,7 +54,7 @@ module.exports = class BoxCollectionClient extends BaseCollectionClient {
     // console.log('[设备->网关] hexData is:', this.hexData)
     this.boxData = new Box(this.hexData)
     if (!this.boxData.validatePackage()) {
-      logger.error('[网关->设备] 非法设备')
+      log4js.getLogger('error').error('[网关->设备] 非法设备')
       return this._cleanCollection()
     }
     this.socket.lastMessageTime = utilsHelper.getTimestamp()
@@ -75,7 +74,7 @@ module.exports = class BoxCollectionClient extends BaseCollectionClient {
     }
 
     if (this.boxData.funcHex === '73') {
-      logger.info('[设备->网关] 回复出货：' + this.hexData)
+      log4js.getLogger('info').info('[设备->网关] 回复出货：' + this.hexData)
       if (this.boxBiz && this.boxData.order) {
         this.boxBiz.updateOrder(this.boxData.order, 1)
       }
@@ -88,7 +87,7 @@ module.exports = class BoxCollectionClient extends BaseCollectionClient {
    */
   handlerBoxMallClient() {
     // https://www.workerman.net/doc/gateway-worker/is-online.html
-    console.log('[应用客户端->网关] utf8Data is:', this.utf8Data)
+    // console.log('[应用客户端->网关] utf8Data is:', this.utf8Data)
     // 应用端连接
     if (this.utf8Data === 'BoxMall#Ping') {
       this.socket.write('Box#Pong')
@@ -96,13 +95,13 @@ module.exports = class BoxCollectionClient extends BaseCollectionClient {
     }
     const data = this.utf8Data.split('#')
     if (data.length !== 4) {
-      logger.error('[网关->应用客户端] 参数错误')
+      log4js.getLogger('error').error('[网关->应用客户端] 参数错误')
       this.socket.write('Box#Err')
       return false
     }
     const code = data[1]
     if (!this.app.boxSockets.hasOwnProperty(code)) {
-      logger.error('[网关->应用客户端] 设备码错误:' + code)
+      log4js.getLogger('error').error('[网关->应用客户端] 设备码错误:' + code)
       this.socket.write('Box#Err')
       return false
     }
@@ -110,26 +109,26 @@ module.exports = class BoxCollectionClient extends BaseCollectionClient {
     const boxData = new Box(cmd.replace(/[\s]*/gi, ''))
     // console.log('boxData:', boxData)
     if (!boxData.validatePackage()) {
-      logger.error('[网关->应用客户端] 解析错误')
+      log4js.getLogger('error').error('[网关->应用客户端] 解析错误')
       this.socket.write('Box#Err')
       return false
     }
     const boxSocket = this.app.boxSockets[code]
     console.log('boxSocket:', boxSocket.deviceId, boxSocket.uniqid)
     if (data[2] === 'ICCID') {
-      logger.info('[网关->设备] 获取ICCID/IMEI：' + cmd)
+      log4js.getLogger('info').info('[网关->设备] 获取ICCID/IMEI：' + cmd)
       return utilsHelper.sendHexCmd(boxSocket, cmd, true)
     }
     if (data[2] === 'PULL') {
-      logger.info('[网关->设备] 出货：' + cmd)
+      log4js.getLogger('info').info('[网关->设备] 出货：' + cmd)
       return utilsHelper.sendHexCmd(boxSocket, cmd, true)
     }
     if (data[2] === 'OPENSTATUS') {
-      logger.info('[网关->设备] 常开/常闭：' + cmd)
+      log4js.getLogger('info').info('[网关->设备] 常开/常闭：' + cmd)
       return utilsHelper.sendHexCmd(boxSocket, cmd, true)
     }
     if (data[2] === 'TEST') {
-      logger.info('[网关->设备] 测试货道：' + cmd)
+      log4js.getLogger('info').info('[网关->设备] 测试货道：' + cmd)
       return utilsHelper.sendHexCmd(boxSocket, cmd, true)
     }
   }
@@ -137,7 +136,6 @@ module.exports = class BoxCollectionClient extends BaseCollectionClient {
   handlerReplayDeviceLogin() {
     // 网关回复设备登录
     const cmd = this.boxData.makeReplayDeviceLoginCmd()
-    // logger.info('[网关->设备] 回复设备登录：' + cmd)
     utilsHelper.sendHexCmd(this.socket, cmd, true)
     if (this.boxData.crcStatus === '01') {
       if (this.socket.deviceId !== this.boxData.id) {
@@ -145,7 +143,7 @@ module.exports = class BoxCollectionClient extends BaseCollectionClient {
         this.app.event.emit('box:login', this.socket)
       }
     } else {
-      logger.error('[网关->设备] 校验失败，设备登录失败')
+      log4js.getLogger('error').error('[网关->设备] 校验失败，设备登录失败')
       this._cleanCollection()
     }
   }
@@ -185,9 +183,9 @@ module.exports = class BoxCollectionClient extends BaseCollectionClient {
   forwardData(data) {
     if (!this.tmpClient.connected) {
       const client = this.tmpClient
-      client.connect(10841, '47.108.178.60', function () {
+      client.connect(10841, '192.168.32.23', function () {
         client.connected = true
-        console.log("连接到正式服务器")
+        // console.log("连接到正式服务器")
         client.write(data)
       })
     } else {
