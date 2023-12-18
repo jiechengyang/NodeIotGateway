@@ -65,7 +65,7 @@ module.exports = {
         //sqlPath: path.join(process.cwd(), './sql')
     },
     frequency: 1000 * 60 * 1,
-    port: 16009,//xph协议设备监听的端口号
+    port: 16009,//网关端口号
 }
 ```
 
